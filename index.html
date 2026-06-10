@@ -361,7 +361,11 @@ const getITypes  = () => R('crm_itypes',   DEF_ITYPES);
 const saveITypes = a  => W('crm_itypes',   a);
 const getSecs    = () => R('crm_secs',     DEF_SECTORS);
 const saveSecs   = a  => W('crm_secs',     a);
-const getGSUrl   = () => localStorage.getItem('crm_gs_url')||'';
+// ── HARDCODED CONFIG — edit these two lines to connect your Sheet/Drive ──────
+const CRM_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxVF1LLhtH0hDWEs5cLmSf18XuZ3YwpbPy0o-8YOH3oXQSFt3xLxf7a6CAAFDNI46O84g/exec';
+const CRM_DRIVE_FOLDER_ID  = '1nuekZ9bLfB3USCG7aRkguqq_ocuFfXaU';
+// ─────────────────────────────────────────────────────────────────────────────
+const getGSUrl   = () => localStorage.getItem('crm_gs_url') || CRM_APPS_SCRIPT_URL;
 const setGSUrl   = u  => localStorage.setItem('crm_gs_url', u);
 const useGS      = () => getGSUrl().startsWith('https://script.google.com/macros/s/');
 
@@ -447,6 +451,13 @@ function startApp(){
   document.getElementById('sb-name').textContent=ME.name;
   document.getElementById('sb-role').textContent={admin:'👑 Admin',manager:'📊 Manager',sales:'💼 Commercial'}[ME.role]||ME.role;
   document.getElementById('btn-sync').style.display=useGS()?'':'none';
+  // Pre-populate settings with hardcoded values if localStorage is empty
+  if(!localStorage.getItem('crm_gs_url') && CRM_APPS_SCRIPT_URL && CRM_APPS_SCRIPT_URL !== 'YOUR_CRM_APPS_SCRIPT_URL_HERE'){
+    setGSUrl(CRM_APPS_SCRIPT_URL);
+  }
+  if(!localStorage.getItem('crm_drive_folder') && CRM_DRIVE_FOLDER_ID && CRM_DRIVE_FOLDER_ID !== 'YOUR_GOOGLE_DRIVE_FOLDER_ID_HERE'){
+    localStorage.setItem('crm_drive_folder', CRM_DRIVE_FOLDER_ID);
+  }
   const driveFolderEl = document.getElementById('cfg-drive-folder');
   if(driveFolderEl) driveFolderEl.value = getDriveFolderId();
   // Show admin-only nav
@@ -454,7 +465,16 @@ function startApp(){
   ['sb-admin-sec','nb-users','nb-settings'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display=isAdmin?'':'none';
   });
-  nav('kanban');
+  // Auto-sync from Sheets on every session start
+  if(useGS()){
+    Promise.all([apiGet('getCRMLeads'), apiGet('getCRMUsers')]).then(([fl,fu])=>{
+      if(fl&&fl.length>0){LEADS=fl;saveLeads();}
+      if(fu&&fu.length>0)saveUsers(fu);
+      nav('kanban');
+    }).catch(()=>nav('kanban'));
+  } else {
+    nav('kanban');
+  }
 }
 
 (function(){
@@ -983,7 +1003,7 @@ function deleteDoc(leadId, docIdx){
 
 
 // ─── GOOGLE DRIVE CONFIG ──────────────────────────────────────────────────────
-function getDriveFolderId(){ return localStorage.getItem('crm_drive_folder')||''; }
+function getDriveFolderId(){ return localStorage.getItem('crm_drive_folder') || CRM_DRIVE_FOLDER_ID || ''; }
 function setDriveFolderId(id){ localStorage.setItem('crm_drive_folder',id); }
 function useDrive(){ return !!getDriveFolderId() && useGS(); }
 
