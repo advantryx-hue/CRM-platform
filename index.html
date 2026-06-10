@@ -163,7 +163,7 @@ textarea{resize:vertical;min-height:64px;}
 <aside class="sidebar">
   <div class="sb-logo">
     <div class="sb-icon">C</div>
-    <div><div style="font-size:13px;font-weight:700;">DigiTex CRM</div><div style="font-size:10px;color:var(--text3);">PIPELINE COMMERCIAL</div></div>
+    <div><div style="font-size:13px;font-weight:700;">AdvantryX CRM</div><div style="font-size:10px;color:var(--text3);">PIPELINE COMMERCIAL</div></div>
   </div>
   <div class="sb-user">
     <div class="sb-av" id="sb-av"></div>
@@ -175,9 +175,9 @@ textarea{resize:vertical;min-height:64px;}
     <button class="nbtn" onclick="nav('kanban')"><span class="ni">⬛</span><span>Kanban</span></button>
     <button class="nbtn" onclick="nav('list')"><span class="ni">≡</span><span>Liste</span></button>
     <button class="nbtn" onclick="nav('dash')"><span class="ni">◈</span><span>Dashboard</span></button>
-    <div class="sb-sec">Admin</div>
-    <button class="nbtn" onclick="nav('users')"><span class="ni">👥</span><span>Utilisateurs</span></button>
-    <button class="nbtn" onclick="nav('settings')"><span class="ni">🔗</span><span>Paramètres</span></button>
+    <div class="sb-sec" id="sb-admin-sec" style="display:none;">Admin</div>
+    <button class="nbtn" id="nb-users" style="display:none;" onclick="nav('users')"><span class="ni">👥</span><span>Utilisateurs</span></button>
+    <button class="nbtn" id="nb-settings" style="display:none;" onclick="nav('settings')"><span class="ni">🔗</span><span>Paramètres</span></button>
     <button class="nbtn" onclick="nav('pwd')"><span class="ni">🔑</span><span>Mot de passe</span></button>
   </nav>
   <div style="padding:.9rem 1.1rem;border-top:1px solid var(--border);font-size:11px;color:var(--text3);">AdvantryX CRM v1.0</div>
@@ -252,13 +252,26 @@ textarea{resize:vertical;min-height:64px;}
   <div class="sc">
     <h3>🔗 Google Sheets — Base de données</h3>
     <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">Connectez ce CRM à un Google Sheet pour persister les données dans le cloud.<br>URL depuis : Apps Script → Déployer → Application Web.</p>
-    <div class="fg"><label>URL Apps Script (/exec)</label><input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/AKfycbzCt3AdSr2-lo7kKnH0FlGpHj8jnMjZrd_RTmy6H5SZseZx_KecbLFtcrcKo6IS_zJpBg/exec"></div>
+    <div class="fg"><label>URL Apps Script (/exec)</label><input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn bp" onclick="saveGS()">💾 Enregistrer & Tester</button>
       <button class="btn bg" onclick="disconnectGS()">🔌 Déconnecter</button>
       <button class="btn bg bsm" id="btn-sync" style="display:none;" onclick="syncGS()">🔄 Sync</button>
     </div>
     <div id="gs-status" style="margin-top:12px;font-size:12px;"></div>
+  </div>
+  <div class="sc">
+    <h3>📁 Google Drive — Stockage des documents</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+      Les documents attachés aux leads seront uploadés dans un dossier Google Drive.<br>
+      Créez un dossier Drive partagé, copiez son ID depuis l'URL :<br>
+      <code style="font-size:11px;background:var(--surface2);padding:2px 6px;border-radius:4px;">drive.google.com/drive/folders/<strong>FOLDER_ID</strong></code>
+    </p>
+    <div class="fg" style="margin-bottom:12px;"><label>Google Drive Folder ID</label>
+      <input type="text" id="cfg-drive-folder" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+    </div>
+    <button class="btn bp" onclick="saveDriveConfig()">💾 Enregistrer</button>
+    <div id="drive-status" style="margin-top:10px;font-size:12px;"></div>
   </div>
   <div class="g2">
     <div class="sc">
@@ -434,6 +447,13 @@ function startApp(){
   document.getElementById('sb-name').textContent=ME.name;
   document.getElementById('sb-role').textContent={admin:'👑 Admin',manager:'📊 Manager',sales:'💼 Commercial'}[ME.role]||ME.role;
   document.getElementById('btn-sync').style.display=useGS()?'':'none';
+  const driveFolderEl = document.getElementById('cfg-drive-folder');
+  if(driveFolderEl) driveFolderEl.value = getDriveFolderId();
+  // Show admin-only nav
+  const isAdmin = ME.role === 'admin';
+  ['sb-admin-sec','nb-users','nb-settings'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display=isAdmin?'':'none';
+  });
   nav('kanban');
 }
 
@@ -454,8 +474,8 @@ function nav(page){
   if(page==='kanban') { renderKPIs('k-kpis'); renderStagebar('k-sbar'); renderKanban(); }
   if(page==='list')   { renderKPIs('l-kpis'); populateSF(); renderList(); }
   if(page==='dash')   { renderKPIs('d-kpis'); renderDash(); }
-  if(page==='users')    renderUsers();
-  if(page==='settings') renderSettings();
+  if(page==='users'){    if(ME?.role!=='admin'){nav('kanban');return;} renderUsers(); }
+  if(page==='settings'){ if(ME?.role!=='admin'){nav('kanban');return;} renderSettings(); }
 }
 
 // ═══════════════════════════════════════ KPIs ══════════════════════════════════════
@@ -534,7 +554,8 @@ function leadCard(l, s){
       <div style="font-weight:700;font-size:13px;color:${s.color};">${fmt(l.value)}</div>
       <div style="font-size:10px;background:${s.color}18;color:${s.color};border-radius:10px;padding:1px 6px;">${l.probability}%</div>
     </div>
-    ${l.interactions&&l.interactions.length?`<div style="font-size:10px;color:var(--text2);margin-top:6px;">💬 ${l.interactions.length} interaction${l.interactions.length>1?'s':''}</div>`:''}
+    ${l.offerType?`<div style="margin-top:6px;"><span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[l.offerType]||'#888'}18;color:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[l.offerType]||'#888'};">${({'saas':'SaaS','oneshot':'One-Shot','hybrid':'Hybride'})[l.offerType]||l.offerType}</span></div>`:''}
+    ${l.interactions&&l.interactions.length?`<div style="font-size:10px;color:var(--text2);margin-top:4px;">💬 ${l.interactions.length} interaction${l.interactions.length>1?'s':''}</div>`:''}
   </div>`;
 }
 
@@ -576,7 +597,10 @@ function renderList(){
             <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;"><div style="width:${l.probability}%;height:100%;background:${s.color};border-radius:2px;"></div></div>
             <span style="font-size:10px;">${l.probability}%</span>
           </div></td>
-          <td><span style="background:${s.color}18;color:${s.color};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;">${s.label}</span></td>
+          <td>
+            <span style="background:${s.color}18;color:${s.color};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;">${s.label}</span>
+            ${lead.offerType?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;margin-left:3px;background:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[lead.offerType]||'#888'}18;color:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[lead.offerType]||'#888'};">${({'saas':'SaaS','oneshot':'One-Shot','hybrid':'Hybride'})[lead.offerType]||lead.offerType}</span>`:''}
+          </td>
           <td style="font-size:12px;">${l.assignedTo||'—'}</td>
           <td style="font-size:12px;color:var(--text2);">${l.closingDate||'—'}</td>
           <td><button onclick="event.stopPropagation();openLead(${l.id})" class="btn bg bsm">✎</button></td>
@@ -669,11 +693,49 @@ function openDP(id){
     <div style="margin:12px 0;">
       <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Informations</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
-        ${[['📞',l.tel||'—'],['✉',l.email||'—'],['🏭',l.sector||'—'],['🌍',l.country||'—'],['⚙',(l.machines||0)+' machines'],['💰',fmt(l.value)],['🎯',l.probability+'% probabilité'],['📅',l.closingDate||'—'],['📣',l.source||'—'],['👤',l.assignedTo||'—']].map(([ic,v])=>`<div style="background:var(--surface2);border-radius:6px;padding:7px 10px;"><div style="font-size:10px;color:var(--text3);">${ic}</div><div style="font-size:12px;font-weight:500;margin-top:2px;">${v}</div></div>`).join('')}
+        ${[['📞',l.tel||'—'],['✉',l.email||'—'],['🏭',l.sector||'—'],['🌍',l.country||'—'],['⚙',(l.machines||0)+' machines'],['💰',`<span id="dp-value-${l.id}">${fmt(l.value)}</span> <button onclick="editLeadValue(${l.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;">✎</button>`],['🎯',`${l.probability}% <button onclick="editLeadProb(${l.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;">✎</button>`],['📅',l.closingDate||'—'],['📣',l.source||'—'],['🏷',{'saas':'☁ SaaS','oneshot':'⚡ One-Shot','hybrid':'🔀 Hybride'}[l.offerType]||'— Non défini —'],['👤',l.assignedTo||'—']].map(([ic,v])=>`<div style="background:var(--surface2);border-radius:6px;padding:7px 10px;"><div style="font-size:10px;color:var(--text3);">${ic}</div><div style="font-size:12px;font-weight:500;margin-top:2px;">${v}</div></div>`).join('')}
       </div>
       ${l.notes?`<div style="background:var(--surface2);border-radius:6px;padding:8px 10px;margin-top:8px;"><div style="font-size:10px;color:var(--text3);">📝 Notes</div><div style="font-size:12px;margin-top:4px;line-height:1.5;">${l.notes}</div></div>`:''}
     </div>
     <div>
+      <!-- Documents section -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">📎 Documents (${(l.documents||[]).length})</div>
+          <label style="cursor:pointer;" title="Attacher un fichier">
+            <input type="file" id="doc-input-${id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" multiple style="display:none;" onchange="attachDoc(${id},this)">
+            <span class="btn bp bsm" onclick="document.getElementById('doc-input-${id}').click()">📎 Attacher</span>
+          </label>
+        </div>
+        <div id="docs-list-${id}" style="display:flex;flex-direction:column;gap:6px;">
+          ${(l.documents||[]).length ? (l.documents||[]).map((doc,di)=>`
+            <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;">
+              <span style="font-size:16px;">${doc.type==='contract'?'📄':doc.type==='quote'?'💼':'📎'}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${doc.name}</div>
+                <div style="font-size:10px;color:var(--text3);">${doc.docType||'Document'} · ${doc.date} · ${formatBytes(doc.size||0)}</div>
+              </div>
+              <div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">
+                ${doc.driveUrl?`<a href="${doc.driveUrl}" target="_blank" style="font-size:10px;color:var(--blue);text-decoration:none;background:var(--blue-bg);padding:2px 6px;border-radius:4px;">🔗 Drive</a>`:''}
+                <button onclick="downloadDoc(${id},${di})" class="btn bg bsm" title="${doc.driveUrl?'Ouvrir dans Drive':'Télécharger'}">${doc.driveUrl?'🔗':'⬇'}</button>
+                <button onclick="deleteDoc(${id},${di})" class="btn bg bsm" style="color:var(--red);" title="Supprimer">🗑</button>
+              </div>
+            </div>`).join('') : (l.stage==='gagne'
+              ? '<div style="font-size:12px;color:var(--green);text-align:center;padding:10px;border:1px dashed var(--green);border-radius:6px;background:var(--green-bg);">🎉 Deal gagné — Attachez le contrat signé</div>'
+              : '<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px;border:1px dashed var(--border2);border-radius:6px;">Aucun document attaché</div>')}
+        </div>
+        <!-- Doc type selector (shown after file picked) -->
+        <div id="doc-type-picker-${id}" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;padding:10px;margin-top:8px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;">Type de document :</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="confirmDocType(${id},'quote')"    class="btn bg bsm">💼 Devis / Offre</button>
+            <button onclick="confirmDocType(${id},'contract')" class="btn bg bsm">📄 Contrat</button>
+            <button onclick="confirmDocType(${id},'other')"    class="btn bg bsm">📎 Autre</button>
+            <button onclick="cancelDocPick(${id})"             class="btn bg bsm" style="color:var(--red);">Annuler</button>
+          </div>
+        </div>
+      </div>
+
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;">Historique (${(l.interactions||[]).length})</div>
         <button onclick="toggleIF(${id})" class="btn bp bsm">+ Ajouter</button>
@@ -690,13 +752,26 @@ function openDP(id){
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         ${[...(l.interactions||[])].reverse().map(it=>`
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;border-left:3px solid var(--blue);">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <div id="inter-card-${id}-${it.id}" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;border-left:3px solid var(--blue);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
               <span style="font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg);border-radius:10px;padding:1px 8px;">${it.type}</span>
-              <span style="font-size:11px;color:var(--text2);">${it.date}</span>
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="font-size:11px;color:var(--text2);">${it.date}</span>
+                <button onclick="editInteraction(${id},${it.id})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:1px 4px;border-radius:3px;" title="Modifier">✎</button>
+                <button onclick="deleteInteraction(${id},${it.id})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px;padding:1px 4px;border-radius:3px;" title="Supprimer">🗑</button>
+              </div>
             </div>
-            <div style="font-size:12px;line-height:1.5;">${it.note}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:4px;">— ${it.user}</div>
+            <div id="inter-view-${id}-${it.id}">
+              <div style="font-size:12px;line-height:1.5;">${it.note}</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:4px;">— ${it.user}</div>
+            </div>
+            <div id="inter-edit-${id}-${it.id}" style="display:none;">
+              <textarea id="inter-edit-note-${id}-${it.id}" style="width:100%;font-size:12px;padding:7px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text);font-family:inherit;resize:vertical;min-height:50px;">${it.note}</textarea>
+              <div style="display:flex;gap:6px;margin-top:6px;">
+                <button onclick="saveInterEdit(${id},${it.id})" class="btn bp bsm" style="flex:1;">💾 Enregistrer</button>
+                <button onclick="cancelInterEdit(${id},${it.id})" class="btn bg bsm">Annuler</button>
+              </div>
+            </div>
           </div>`).join('')}
         ${!(l.interactions||[]).length?'<div style="text-align:center;padding:14px;color:var(--text3);font-size:12px;">Aucune interaction enregistrée</div>':''}
       </div>
@@ -776,9 +851,226 @@ function openLead(id){
         </div>`).join('')}
       <div class="fg" style="margin-bottom:0;"><label>Secteur</label><select id="lf-sector">${secs.map(s=>`<option ${d.sector===s?'selected':''}>${s}</option>`).join('')}</select></div>
       <div class="fg" style="margin-bottom:0;"><label>Assigné à</label><select id="lf-assignedTo">${users.map(u=>`<option value="${u.name}" ${d.assignedTo===u.name?'selected':''}>${u.name}</option>`).join('')}</select></div>
+      <div class="fg" style="margin-bottom:0;"><label>Type d'offre</label>
+        <select id="lf-offerType">
+          <option value="">— Non défini —</option>
+          <option value="saas" ${d.offerType==='saas'?'selected':''}>☁ SaaS (Abonnement)</option>
+          <option value="oneshot" ${d.offerType==='oneshot'?'selected':''}>⚡ One-Shot (Licence)</option>
+          <option value="hybrid" ${d.offerType==='hybrid'?'selected':''}>🔀 Hybride</option>
+        </select>
+      </div>
       <div class="fg" style="grid-column:1/-1;margin-bottom:0;"><label>Notes</label><textarea id="lf-notes" rows="3">${d.notes||''}</textarea></div>
     </div>`;
   document.getElementById('lead-modal').classList.add('open');
+}
+
+
+// ─── INTERACTION EDIT/DELETE ──────────────────────────────────────────────────
+
+
+
+// ─── DOCUMENT MANAGEMENT ─────────────────────────────────────────────────────
+let _pendingDocFiles = null;
+let _pendingDocLeadId = null;
+
+function formatBytes(bytes){
+  if(!bytes) return '0 B';
+  if(bytes<1024) return bytes+' B';
+  if(bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/(1024*1024)).toFixed(1)+' MB';
+}
+
+function attachDoc(leadId, input){
+  if(!input.files||!input.files.length) return;
+  _pendingDocFiles  = input.files;
+  _pendingDocLeadId = leadId;
+  document.getElementById('doc-type-picker-'+leadId).style.display='block';
+}
+
+function cancelDocPick(leadId){
+  _pendingDocFiles  = null;
+  _pendingDocLeadId = null;
+  document.getElementById('doc-type-picker-'+leadId).style.display='none';
+  const inp=document.getElementById('doc-input-'+leadId);
+  if(inp) inp.value='';
+}
+
+function confirmDocType(leadId, docType){
+  if(!_pendingDocFiles) return;
+  const files = Array.from(_pendingDocFiles);
+  const lead  = LEADS.find(l=>l.id===leadId);
+  if(!lead) return;
+
+  const newDocs = [];
+  let processed = 0;
+
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = async function(e){
+      let doc = {
+        id      : Date.now()+Math.random(),
+        name    : file.name,
+        docType : docType==='quote'?'Devis / Offre':docType==='contract'?'Contrat':'Autre',
+        type    : docType,
+        date    : new Date().toISOString().split('T')[0],
+        size    : file.size,
+        data    : e.target.result, // base64 (will be cleared after Drive upload)
+        addedBy : ME?.name||'Admin',
+        driveUrl: null,
+        driveId : null,
+      };
+      // Upload to Drive if configured
+      if(useDrive()){
+        document.getElementById('docs-list-'+leadId).innerHTML =
+          '<div style="font-size:12px;color:var(--text2);padding:8px;">⏳ Upload en cours…</div>';
+        doc = await uploadDocToDrive(leadId, doc);
+      }
+      newDocs.push(doc);
+      processed++;
+      if(processed===files.length){
+        LEADS = LEADS.map(l=>l.id===leadId
+          ? {...l, documents:[...(l.documents||[]), ...newDocs]}
+          : l
+        );
+        saveLeads();
+        if(useGS()) syncLead(LEADS.find(l=>l.id===leadId));
+        cancelDocPick(leadId);
+        openDP(leadId);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function downloadDoc(leadId, docIdx){
+  const lead = LEADS.find(l=>l.id===leadId);
+  const doc  = lead?.documents?.[docIdx];
+  if(!doc){ alert('Document introuvable.'); return; }
+  if(doc.driveUrl){
+    window.open(doc.driveUrl,'_blank');
+    return;
+  }
+  if(!doc.data){ alert('Fichier non disponible (données supprimées après upload Drive).'); return; }
+  const a    = document.createElement('a');
+  a.href     = doc.data;
+  a.download = doc.name;
+  a.click();
+}
+
+function deleteDoc(leadId, docIdx){
+  if(!confirm('Supprimer ce document ?')) return;
+  LEADS = LEADS.map(l=>{
+    if(l.id!==leadId) return l;
+    const docs = [...(l.documents||[])];
+    docs.splice(docIdx,1);
+    return {...l, documents:docs};
+  });
+  saveLeads();
+  openDP(leadId);
+}
+
+
+// ─── GOOGLE DRIVE CONFIG ──────────────────────────────────────────────────────
+function getDriveFolderId(){ return localStorage.getItem('crm_drive_folder')||''; }
+function setDriveFolderId(id){ localStorage.setItem('crm_drive_folder',id); }
+function useDrive(){ return !!getDriveFolderId() && useGS(); }
+
+function saveDriveConfig(){
+  const fid = document.getElementById('cfg-drive-folder')?.value?.trim();
+  setDriveFolderId(fid||'');
+  const st = document.getElementById('drive-status');
+  if(fid){
+    st.innerHTML='<span style="color:var(--green);">✅ Dossier Drive configuré.</span>';
+  } else {
+    st.innerHTML='<span style="color:var(--amber);">⚠ Dossier supprimé — documents en local uniquement.</span>';
+  }
+}
+
+// Upload a file to Google Drive via Apps Script proxy
+async function uploadToDrive(fileName, base64Data, mimeType){
+  const folderId = getDriveFolderId();
+  if(!folderId || !useGS()) return null;
+  const res = await apiPost({
+    action     : 'uploadToDrive',
+    fileName   : fileName,
+    base64Data : base64Data.split(',')[1], // strip data URL prefix
+    mimeType   : mimeType || 'application/octet-stream',
+    folderId   : folderId,
+  });
+  return res; // { fileId, fileUrl, fileName }
+}
+
+async function uploadDocToDrive(leadId, doc){
+  if(!useDrive()||!doc.data) return doc;
+  try{
+    const mime = doc.data.split(';')[0].replace('data:','');
+    const result = await uploadToDrive(doc.name, doc.data, mime);
+    if(result && result.fileUrl){
+      return {...doc, driveUrl:result.fileUrl, driveId:result.fileId, data:null}; // clear base64 after upload
+    }
+  }catch(e){ console.warn('Drive upload failed:', e); }
+  return doc;
+}
+
+function editLeadProb(id){
+  const lead=LEADS.find(l=>l.id===id); if(!lead) return;
+  const newVal=prompt('Nouvelle probabilité (0-100%) :', lead.probability);
+  if(newVal===null) return;
+  const parsed=parseInt(newVal);
+  if(isNaN(parsed)||parsed<0||parsed>100){ alert('Valeur invalide (0-100).'); return; }
+  LEADS=LEADS.map(l=>l.id===id?{...l,probability:parsed}:l);
+  saveLeads();
+  if(useGS()) syncLead(LEADS.find(l=>l.id===id));
+  openDP(id);
+}
+
+function editLeadValue(id){
+  const lead=LEADS.find(l=>l.id===id); if(!lead) return;
+  const newVal=prompt('Nouveau montant (TND) :', lead.value);
+  if(newVal===null) return;
+  const parsed=parseFloat(String(newVal).replace(/[^0-9.]/g,''));
+  if(isNaN(parsed)||parsed<0){ alert('Montant invalide.'); return; }
+  LEADS=LEADS.map(l=>l.id===id?{...l,value:parsed}:l);
+  saveLeads();
+  if(useGS()) syncLead(LEADS.find(l=>l.id===id));
+  // Update KPIs and refresh kanban/list
+  const pg=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(pg==='kanban'){renderKPIs('k-kpis');renderKanban();}
+  if(pg==='list'){renderKPIs('l-kpis');renderList();}
+  if(pg==='dash'){renderKPIs('d-kpis');renderDash();}
+  openDP(id);
+}
+
+function editInteraction(leadId, interId){
+  document.getElementById('inter-view-'+leadId+'-'+interId).style.display='none';
+  document.getElementById('inter-edit-'+leadId+'-'+interId).style.display='block';
+}
+function cancelInterEdit(leadId, interId){
+  document.getElementById('inter-view-'+leadId+'-'+interId).style.display='block';
+  document.getElementById('inter-edit-'+leadId+'-'+interId).style.display='none';
+}
+function saveInterEdit(leadId, interId){
+  const note=document.getElementById('inter-edit-note-'+leadId+'-'+interId)?.value?.trim();
+  if(!note) return;
+  LEADS=LEADS.map(l=>{
+    if(l.id!==leadId) return l;
+    return {...l, interactions:(l.interactions||[]).map(it=>
+      it.id===interId ? {...it, note, editedAt:new Date().toISOString().split('T')[0]} : it
+    )};
+  });
+  saveLeads();
+  if(useGS()) syncLead(LEADS.find(l=>l.id===leadId));
+  openDP(leadId);
+}
+function deleteInteraction(leadId, interId){
+  if(!confirm('Supprimer cette interaction ?')) return;
+  LEADS=LEADS.map(l=>{
+    if(l.id!==leadId) return l;
+    return {...l, interactions:(l.interactions||[]).filter(it=>it.id!==interId)};
+  });
+  saveLeads();
+  if(useGS()) syncLead(LEADS.find(l=>l.id===leadId));
+  openDP(leadId);
 }
 
 function saveLead(){
@@ -795,10 +1087,12 @@ function saveLead(){
     value       : parseFloat(g('value'))||0,
     probability : parseInt(g('probability'))||20,
     closingDate : g('closingDate'), source:g('source'),
+    offerType   : g('offerType') || existing?.offerType || '',
     notes       : g('notes'),
     assignedTo  : g('assignedTo'),
     createdAt   : existing?.createdAt || new Date().toISOString().split('T')[0],
     interactions: existing?.interactions || [],
+    documents   : existing?.documents   || [],
   };
   LEADS = EDIT_ID ? LEADS.map(l=>l.id===EDIT_ID?lead:l) : [...LEADS,lead];
   saveLeads();
@@ -830,6 +1124,7 @@ function addSec(){const v=document.getElementById('new-sec').value.trim();if(!v)
 function rmSec(i){const s=getSecs();s.splice(i,1);saveSecs(s);renderSettings();}
 
 async function saveGS(){
+  if(ME?.role!=='admin'){alert('Accès refusé. Seul le Super Admin peut modifier les paramètres.');return;}
   const url=document.getElementById('cfg-url').value.trim();
   const st=document.getElementById('gs-status');
   if(!url){setGSUrl('');showA('cfg-alert','URL supprimée.','aw');renderSettings();return;}
@@ -873,7 +1168,7 @@ async function saveGS(){
     showA('cfg-alert','❌ '+e.message+hint,'ae');
   }finally{setLoad(false);}
 }
-function disconnectGS(){if(!confirm('Déconnecter Google Sheets ?'))return;setGSUrl('');document.getElementById('cfg-url').value='';showA('cfg-alert','Déconnecté. Données conservées localement.','aw');renderSettings();}
+function disconnectGS(){if(ME?.role!=='admin'){alert('Accès refusé.');return;} if(!confirm('Déconnecter Google Sheets ?'))return;setGSUrl('');document.getElementById('cfg-url').value='';showA('cfg-alert','Déconnecté. Données conservées localement.','aw');renderSettings();}
 async function syncGS(){
   if(!useGS()){alert('Non configuré.');return;}
   setLoad(true);
@@ -912,6 +1207,7 @@ function renderUsers(){
 }
 
 async function addUser(){
+  if(ME?.role!=='admin'){alert('Accès refusé. Seul le Super Admin peut ajouter des utilisateurs.');return;}
   const name=document.getElementById('u-name').value.trim();
   const email=document.getElementById('u-email').value.trim().toLowerCase();
   const role=document.getElementById('u-role').value;
@@ -928,9 +1224,9 @@ async function addUser(){
   renderUsers();
 }
 const rL={admin:'👑 Admin',manager:'📊 Manager',sales:'💼 Commercial'};
-function chRole(i,role){const u=getUsers();u[i].role=role;saveUsers(u);if(useGS())apiPost({action:'saveCRMUser',user:u[i]}).catch(()=>{});}
-function rmUser(i,name){if(!confirm('Supprimer '+name+' ?'))return;const u=getUsers();const email=u[i].email;u.splice(i,1);saveUsers(u);if(useGS())apiPost({action:'deleteCRMUser',email}).catch(()=>{});showA('u-alert','⚠ '+name+' supprimé.','aw');renderUsers();}
-function rstPwd(email,name){if(!confirm('Réinitialiser le mot de passe de '+name+' ?'))return;resetPwd(email);if(useGS())apiPost({action:'resetPassword',email}).catch(()=>{});showA('u-alert','✅ Mot de passe de <strong>'+name+'</strong> réinitialisé.','as');renderUsers();}
+function chRole(i,role){if(ME?.role!=='admin'){alert('Accès refusé.');return;} const u=getUsers();u[i].role=role;saveUsers(u);if(useGS())apiPost({action:'saveCRMUser',user:u[i]}).catch(()=>{});}
+function rmUser(i,name){if(ME?.role!=='admin'){alert('Accès refusé.');return;} if(!confirm('Supprimer '+name+' ?'))return;const u=getUsers();const email=u[i].email;u.splice(i,1);saveUsers(u);if(useGS())apiPost({action:'deleteCRMUser',email}).catch(()=>{});showA('u-alert','⚠ '+name+' supprimé.','aw');renderUsers();}
+function rstPwd(email,name){if(ME?.role!=='admin'){alert('Accès refusé.');return;} if(!confirm('Réinitialiser le mot de passe de '+name+' ?'))return;resetPwd(email);if(useGS())apiPost({action:'resetPassword',email}).catch(()=>{});showA('u-alert','✅ Mot de passe de <strong>'+name+'</strong> réinitialisé.','as');renderUsers();}
 
 function changePwd(){
   const cur=document.getElementById('p-cur').value;const nw=document.getElementById('p-new').value;const cfm=document.getElementById('p-cfm').value;
