@@ -587,36 +587,38 @@ function populateSF(){
   STAGES.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.label;sel.appendChild(o);});
 }
 
+function listRow(l){
+  const s=stg(l.stage);
+  const sel=SEL_ID===l.id?'background:var(--blue-bg);':'';
+  const probBar='<div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;"><div style="width:'+l.probability+'%;height:100%;background:'+s.color+';border-radius:2px;"></div></div>';
+  return '<tr onclick="openDP('+l.id+')" style="cursor:pointer;'+sel+'">'
+    +'<td><div style="font-weight:600;">'+l.company+'</div><div style="font-size:10px;color:var(--text3);">'+(l.country||'')+'</div></td>'
+    +'<td style="font-size:12px;">'+l.contact+'<br><span style="font-size:10px;color:var(--text3);">'+(l.poste||'')+'</span></td>'
+    +'<td style="font-size:12px;color:var(--text2);">'+(l.sector||'')+'</td>'
+    +'<td style="font-weight:700;color:'+s.color+';">'+fmt(l.value)+'</td>'
+    +'<td><div style="display:flex;align-items:center;gap:5px;">'+probBar+'<span style="font-size:10px;">'+l.probability+'%</span></div></td>'
+    +'<td><span style="background:'+s.color+'18;color:'+s.color+';border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;">'+s.label+'</span>'+offerBadge(l.offerType)+'</td>'
+    +'<td style="font-size:12px;">'+(l.assignedTo||'—')+'</td>'
+    +'<td style="font-size:12px;color:var(--text2);">'+(l.closingDate||'—')+'</td>'
+    +'<td><button onclick="event.stopPropagation();openLead('+l.id+')" class="btn bg bsm">✎</button></td>'
+    +'</tr>';
+}
+
 function renderList(){
   const q  = (document.getElementById('lq')?.value||'').toLowerCase();
   const sf = document.getElementById('lsf')?.value||'';
   let rows = FILTER==='all' ? [...LEADS] : LEADS.filter(l=>l.stage===FILTER);
   if(q)  rows = rows.filter(l=>l.company.toLowerCase().includes(q)||l.contact.toLowerCase().includes(q));
   if(sf) rows = rows.filter(l=>l.stage===sf);
-  document.getElementById('l-table').innerHTML = `<div class="card" style="overflow:hidden;padding:0;">
-    <div class="tbl"><table>
-      <thead><tr><th>Entreprise</th><th>Contact</th><th>Secteur</th><th>Valeur</th><th>Probabilité</th><th>Étape</th><th>Assigné</th><th>Closing</th><th></th></tr></thead>
-      <tbody>${rows.map(l=>{
-        const s=stg(l.stage);
-        return `<tr onclick="openDP(${l.id})" style="cursor:pointer;${SEL_ID===l.id?'background:var(--blue-bg);':''}">
-          <td><div style="font-weight:600;">${l.company}</div><div style="font-size:10px;color:var(--text3);">${l.country||''}</div></td>
-          <td style="font-size:12px;">${l.contact}<br><span style="font-size:10px;color:var(--text3);">${l.poste||''}</span></td>
-          <td style="font-size:12px;color:var(--text2);">${l.sector||''}</td>
-          <td style="font-weight:700;color:${s.color};">${fmt(l.value)}</td>
-          <td><div style="display:flex;align-items:center;gap:5px;">
-            <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;"><div style="width:${l.probability}%;height:100%;background:${s.color};border-radius:2px;"></div></div>
-            <span style="font-size:10px;">${l.probability}%</span>
-          </div></td>
-          <td>
-            <span style="background:${s.color}18;color:${s.color};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;">${s.label}</span>
-            ${offerBadge(lead.offerType)}
-          </td>
-          <td style="font-size:12px;">${l.assignedTo||'—'}</td>
-          <td style="font-size:12px;color:var(--text2);">${l.closingDate||'—'}</td>
-          <td><button onclick="event.stopPropagation();openLead(${l.id})" class="btn bg bsm">✎</button></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table></div></div>`;
+  const tbody = rows.length
+    ? rows.map(listRow).join('')
+    : '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem;">Aucun lead trouvé</td></tr>';
+  document.getElementById('l-table').innerHTML =
+    '<div class="card" style="overflow:hidden;padding:0;">'
+    +'<div class="tbl"><table>'
+    +'<thead><tr><th>Entreprise</th><th>Contact</th><th>Secteur</th><th>Valeur</th><th>Probabilité</th><th>Étape</th><th>Assigné</th><th>Closing</th><th></th></tr></thead>'
+    +'<tbody>'+tbody+'</tbody>'
+    +'</table></div></div>';
 }
 
 // ═══════════════════════════════════════ DASHBOARD ════════════════════════════════
