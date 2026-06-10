@@ -145,7 +145,7 @@ textarea{resize:vertical;min-height:64px;}
   <div class="lbox">
     <div class="lbox-top">
       <div class="lbadge">AdvantryX</div>
-      <h1>CRM Pipeline</h1>
+      <h1>AdvantryX CRM</h1>
       <p>Connectez-vous avec votre email professionnel</p>
     </div>
     <div class="lerr" id="lerr"></div>
@@ -554,9 +554,19 @@ function leadCard(l, s){
       <div style="font-weight:700;font-size:13px;color:${s.color};">${fmt(l.value)}</div>
       <div style="font-size:10px;background:${s.color}18;color:${s.color};border-radius:10px;padding:1px 6px;">${l.probability}%</div>
     </div>
-    ${l.offerType?`<div style="margin-top:6px;"><span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[l.offerType]||'#888'}18;color:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[l.offerType]||'#888'};">${({'saas':'SaaS','oneshot':'One-Shot','hybrid':'Hybride'})[l.offerType]||l.offerType}</span></div>`:''}
+    ${l.offerType?'<div style="margin-top:6px;">'+offerBadge(l.offerType)+'</div>':''}
     ${l.interactions&&l.interactions.length?`<div style="font-size:10px;color:var(--text2);margin-top:4px;">💬 ${l.interactions.length} interaction${l.interactions.length>1?'s':''}</div>`:''}
   </div>`;
+}
+
+
+const OFFER_COLORS = {saas:'#0891b2',oneshot:'#7c3aed',hybrid:'#d97706'};
+const OFFER_LABELS = {saas:'SaaS',oneshot:'One-Shot',hybrid:'Hybride'};
+function offerBadge(type){
+  if(!type) return '';
+  const col = OFFER_COLORS[type]||'#888';
+  const lbl = OFFER_LABELS[type]||type;
+  return '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:'+col+'18;color:'+col+';">'+lbl+'</span>';
 }
 
 function drop(stageId){
@@ -599,7 +609,7 @@ function renderList(){
           </div></td>
           <td>
             <span style="background:${s.color}18;color:${s.color};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;">${s.label}</span>
-            ${lead.offerType?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;margin-left:3px;background:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[lead.offerType]||'#888'}18;color:${({'saas':'#0891b2','oneshot':'#7c3aed','hybrid':'#d97706'})[lead.offerType]||'#888'};">${({'saas':'SaaS','oneshot':'One-Shot','hybrid':'Hybride'})[lead.offerType]||lead.offerType}</span>`:''}
+            ${offerBadge(lead.offerType)}
           </td>
           <td style="font-size:12px;">${l.assignedTo||'—'}</td>
           <td style="font-size:12px;color:var(--text2);">${l.closingDate||'—'}</td>
