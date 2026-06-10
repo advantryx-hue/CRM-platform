@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdvantryX CRM</title>
+<style>
+:root{
+  --bg:#f5f4f1;--surface:#fff;--surface2:#f0efe9;--surface3:#e8e7e0;
+  --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
+  --text:#18180f;--text2:#6b6a63;--text3:#a09f98;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-t:#15803d;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-t:#92400e;
+  --red:#dc2626;--red-bg:#fef2f2;--red-t:#991b1b;
+  --r:10px;--rs:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* LOGIN */
+#login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.lbox{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.lbox-top{text-align:center;margin-bottom:2rem;}
+.lbadge{display:inline-block;background:var(--blue);color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:6px;margin-bottom:8px;}
+.lbox h1{font-size:20px;font-weight:600;margin-bottom:4px;}
+.lbox p{font-size:12px;color:var(--text2);}
+.lf{margin-bottom:12px;}
+.lf label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+.lf input{width:100%;font-size:13px;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface);color:var(--text);outline:none;font-family:inherit;}
+.lf input:focus{border-color:var(--blue);}
+.lbtn{width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.lbtn:hover{opacity:.88;}.lbtn:disabled{opacity:.5;cursor:default;}
+.lerr{display:none;background:var(--red-bg);color:var(--red-t);border:1px solid #fecaca;border-radius:var(--rs);padding:8px 12px;font-size:12px;margin-bottom:12px;}
+.lhint{text-align:center;font-size:11px;color:var(--text3);margin-top:12px;}
+
+/* APP LAYOUT */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;flex-shrink:0;}
+.main{flex:1;overflow:auto;}
+
+/* SIDEBAR */
+.sb-logo{padding:1rem 1.2rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-icon{width:34px;height:34px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;}
+.sb-user{padding:.65rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.sb-nav{padding:.5rem;flex:1;}
+.sb-sec{font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;padding:.5rem .7rem .25rem;}
+.nbtn{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:1px;border:none;background:none;width:100%;text-align:left;transition:all .12s;}
+.nbtn:hover{background:var(--surface2);color:var(--text);}
+.nbtn.active{background:var(--blue-bg);color:var(--blue);font-weight:500;}
+.ni{font-size:14px;flex-shrink:0;}
+
+/* PANELS */
+.panel{display:none;padding:1.5rem 2rem;}
+.panel.active{display:block;}
+.ptitle{font-size:20px;font-weight:600;margin-bottom:4px;}
+.psub{font-size:13px;color:var(--text2);margin-bottom:1.25rem;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;}
+.ctitle{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem;}
+
+/* KPI BAR */
+.kpis{display:flex;gap:24px;flex-wrap:wrap;padding:10px 0 14px;border-bottom:1px solid var(--border);margin-bottom:1.25rem;}
+.kpi{display:flex;align-items:center;gap:10px;}
+.kpi-line{width:3px;height:26px;border-radius:2px;flex-shrink:0;}
+.kpi-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;}
+.kpi-val{font-size:16px;font-weight:700;line-height:1.2;}
+
+/* STAGE BAR */
+.sbar{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:1.25rem;}
+.sbtn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 10px;border-radius:6px;cursor:pointer;min-width:68px;border:1px solid var(--border2);background:var(--surface);transition:all .12s;font-family:inherit;}
+.sbtn:hover{background:var(--surface2);}
+.sbtn.active{color:#fff !important;border-color:transparent;}
+
+/* KANBAN */
+.kboard{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;align-items:flex-start;}
+.kcol{min-width:208px;max-width:208px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:box-shadow .15s;}
+.kcol.dragover{box-shadow:0 0 0 2px var(--blue);}
+.kcol-head{padding:10px 12px;display:flex;justify-content:space-between;align-items:center;}
+.kcol-body{padding:8px;min-height:80px;}
+.lcard{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px;cursor:pointer;margin-bottom:8px;border-left:3px solid;transition:all .12s;}
+.lcard:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.07);}
+.lcard.sel{background:var(--blue-bg);border-color:var(--blue);}
+.kempty{text-align:center;padding:16px 8px;color:var(--text3);font-size:12px;border:1px dashed var(--border2);border-radius:6px;}
+
+/* TABLE */
+.tbl{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--rs);font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:opacity .15s;}
+.bp{background:var(--blue);color:#fff;}.bg{background:none;border-color:var(--border2);color:var(--text2);}.bd{background:var(--red);color:#fff;}
+.btn:hover{opacity:.82;} .bsm{padding:4px 9px;font-size:11px;}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.fg label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;}
+input,select,textarea{font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface);color:var(--text);outline:none;font-family:inherit;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+textarea{resize:vertical;min-height:64px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* ALERTS */
+.alert{padding:9px 13px;border-radius:var(--rs);font-size:12px;margin-bottom:12px;}
+.as{background:var(--green-bg);color:var(--green-t);border:1px solid #bbf7d0;}
+.aw{background:var(--amber-bg);color:var(--amber-t);border:1px solid #fde68a;}
+.ae{background:var(--red-bg);color:var(--red-t);border:1px solid #fecaca;}
+
+/* MODAL */
+.ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:900;align-items:center;justify-content:center;}
+.ovl.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;max-width:600px;width:94%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);}
+.mtitle{font-size:16px;font-weight:600;margin-bottom:1rem;}
+.mfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+/* DETAIL PANEL */
+#dp-wrap{display:none;position:fixed;inset:0;z-index:400;pointer-events:none;}
+#dp{position:absolute;top:0;right:0;bottom:0;width:450px;background:var(--surface);border-left:1px solid var(--border2);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.1);pointer-events:all;}
+#dp-head{padding:15px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#dp-body{flex:1;overflow-y:auto;padding:15px 18px;}
+
+/* LOADING */
+#loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9999;align-items:center;justify-content:center;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner{width:20px;height:20px;border:2.5px solid #e5e7eb;border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;}
+
+/* SETTINGS */
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1.25rem;}
+.sc h3{font-size:13px;font-weight:600;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<div id="loading"><div style="background:var(--surface);border-radius:12px;padding:1.25rem 1.75rem;display:flex;align-items:center;gap:12px;border:1px solid var(--border);"><div class="spinner"></div><span style="font-size:13px;font-weight:500;">Synchronisation…</span></div></div>
+
+<!-- LOGIN -->
+<div id="login-wrap">
+  <div class="lbox">
+    <div class="lbox-top">
+      <div class="lbadge">AdvantryX</div>
+      <h1>CRM Pipeline</h1>
+      <p>Connectez-vous avec votre email professionnel</p>
+    </div>
+    <div class="lerr" id="lerr"></div>
+    <div class="lf"><label>Email</label><input type="email" id="li-email" placeholder="prenom.nom@advantryx.com" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="lf"><label>Mot de passe</label><input type="password" id="li-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+    <button class="lbtn" id="lbtn" onclick="login()">Se connecter</button>
+    <div class="lhint">Mot de passe par défaut : <strong>password</strong><br>
+      <button onclick="if(confirm('Réinitialiser les données?')){localStorage.clear();sessionStorage.clear();location.reload();}" style="background:none;border:none;color:var(--text3);font-size:10px;cursor:pointer;text-decoration:underline;margin-top:6px;">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" style="display:none;">
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon">C</div>
+    <div><div style="font-size:13px;font-weight:700;">DigiTex CRM</div><div style="font-size:10px;color:var(--text3);">PIPELINE COMMERCIAL</div></div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-av" id="sb-av"></div>
+    <div style="min-width:0;flex:1;"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="sb-name"></div><div style="font-size:10px;color:var(--text3);" id="sb-role"></div></div>
+    <button onclick="logout()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;flex-shrink:0;">⏏</button>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Pipeline</div>
+    <button class="nbtn" onclick="nav('kanban')"><span class="ni">⬛</span><span>Kanban</span></button>
+    <button class="nbtn" onclick="nav('list')"><span class="ni">≡</span><span>Liste</span></button>
+    <button class="nbtn" onclick="nav('dash')"><span class="ni">◈</span><span>Dashboard</span></button>
+    <div class="sb-sec">Admin</div>
+    <button class="nbtn" onclick="nav('users')"><span class="ni">👥</span><span>Utilisateurs</span></button>
+    <button class="nbtn" onclick="nav('settings')"><span class="ni">🔗</span><span>Paramètres</span></button>
+    <button class="nbtn" onclick="nav('pwd')"><span class="ni">🔑</span><span>Mot de passe</span></button>
+  </nav>
+  <div style="padding:.9rem 1.1rem;border-top:1px solid var(--border);font-size:11px;color:var(--text3);">AdvantryX CRM v1.0</div>
+</aside>
+
+<main class="main">
+
+<!-- KANBAN PANEL -->
+<div class="panel" id="panel-kanban">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px;">
+    <div><div class="ptitle" style="margin:0;">Pipeline Kanban</div><div style="font-size:12px;color:var(--text2);">Glisser-déposer pour changer d'étape</div></div>
+    <button class="btn bp bsm" onclick="openLead(null)">+ Nouveau Lead</button>
+  </div>
+  <div id="k-kpis" class="kpis"></div>
+  <div id="k-sbar" class="sbar"></div>
+  <div id="k-board" class="kboard"></div>
+</div>
+
+<!-- LIST PANEL -->
+<div class="panel" id="panel-list">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px;">
+    <div class="ptitle" style="margin:0;">Liste des Leads</div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="lq" placeholder="Rechercher…" oninput="renderList()" style="font-size:12px;padding:6px 10px;width:170px;">
+      <select id="lsf" onchange="renderList()" style="font-size:12px;padding:6px 10px;"><option value="">Toutes étapes</option></select>
+      <button class="btn bp bsm" onclick="openLead(null)">+ Nouveau Lead</button>
+    </div>
+  </div>
+  <div id="l-kpis" class="kpis"></div>
+  <div id="l-table"></div>
+</div>
+
+<!-- DASH PANEL -->
+<div class="panel" id="panel-dash">
+  <div class="ptitle">Dashboard</div>
+  <div class="psub">Analyse du pipeline commercial</div>
+  <div id="d-kpis" class="kpis"></div>
+  <div id="d-content"></div>
+</div>
+
+<!-- USERS PANEL -->
+<div class="panel" id="panel-users">
+  <div class="ptitle">Utilisateurs</div>
+  <div class="psub">Gérer les accès à la plateforme CRM</div>
+  <div id="u-alert" style="display:none;margin-bottom:1rem;"></div>
+  <div class="sc">
+    <h3>Ajouter un utilisateur</h3>
+    <div class="frow">
+      <div class="fg"><label>Nom *</label><input type="text" id="u-name" placeholder="Prénom Nom"></div>
+      <div class="fg"><label>Email *</label><input type="email" id="u-email" placeholder="prenom.nom@advantryx.com"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Rôle</label><select id="u-role"><option value="sales">💼 Commercial</option><option value="manager">📊 Manager</option><option value="admin">👑 Admin</option></select></div>
+      <div class="fg"><label>Mot de passe initial</label><input type="text" id="u-pwd" placeholder="Défaut: password" autocomplete="off"></div>
+    </div>
+    <button class="btn bp" onclick="addUser()">➕ Ajouter</button>
+  </div>
+  <div class="sc">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3 style="margin:0;">Comptes <span id="u-cnt" style="font-weight:400;color:var(--text3);font-size:11px;"></span></h3>
+      <input type="text" id="u-q" placeholder="Rechercher…" oninput="renderUsers()" style="font-size:12px;padding:5px 10px;width:150px;">
+    </div>
+    <div class="tbl"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Mot de passe</th><th></th></tr></thead><tbody id="u-tbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="panel" id="panel-settings">
+  <div class="ptitle">Paramètres</div>
+  <div class="psub">Configuration de la connexion Google Sheets</div>
+  <div id="cfg-alert" style="display:none;margin-bottom:1rem;"></div>
+  <div class="sc">
+    <h3>🔗 Google Sheets — Base de données</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">Connectez ce CRM à un Google Sheet pour persister les données dans le cloud.<br>URL depuis : Apps Script → Déployer → Application Web.</p>
+    <div class="fg"><label>URL Apps Script (/exec)</label><input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/AKfycbzCt3AdSr2-lo7kKnH0FlGpHj8jnMjZrd_RTmy6H5SZseZx_KecbLFtcrcKo6IS_zJpBg/exec"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn bp" onclick="saveGS()">💾 Enregistrer & Tester</button>
+      <button class="btn bg" onclick="disconnectGS()">🔌 Déconnecter</button>
+      <button class="btn bg bsm" id="btn-sync" style="display:none;" onclick="syncGS()">🔄 Sync</button>
+    </div>
+    <div id="gs-status" style="margin-top:12px;font-size:12px;"></div>
+  </div>
+  <div class="g2">
+    <div class="sc">
+      <h3>📋 Types d'interactions</h3>
+      <div id="itype-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:6px;"><input type="text" id="new-itype" placeholder="Ex: Visite terrain" style="flex:1;font-size:12px;"><button class="btn bp bsm" onclick="addIType()">+</button></div>
+    </div>
+    <div class="sc">
+      <h3>🏭 Secteurs</h3>
+      <div id="sec-list" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:6px;"><input type="text" id="new-sec" placeholder="Ex: Agroalimentaire" style="flex:1;font-size:12px;"><button class="btn bp bsm" onclick="addSec()">+</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PWD PANEL -->
+<div class="panel" id="panel-pwd">
+  <div class="ptitle">Changer mon mot de passe</div>
+  <div class="sc" style="max-width:400px;">
+    <div id="p-alert" style="display:none;margin-bottom:12px;"></div>
+    <div class="fg"><label>Mot de passe actuel</label><input type="password" id="p-cur"></div>
+    <div class="fg"><label>Nouveau mot de passe</label><input type="password" id="p-new"></div>
+    <div class="fg"><label>Confirmer</label><input type="password" id="p-cfm"></div>
+    <button class="btn bp" onclick="changePwd()">Enregistrer</button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- DETAIL PANEL -->
+<div id="dp-wrap">
+  <div id="dp">
+    <div id="dp-head"></div>
+    <div id="dp-body"></div>
+  </div>
+</div>
+
+<!-- LEAD MODAL -->
+<div class="ovl" id="lead-modal">
+  <div class="modal">
+    <div class="mtitle" id="lm-title">Nouveau Lead</div>
+    <div id="lm-form"></div>
+    <div class="mfoot">
+      <button class="btn bg" onclick="closeMod()">Annuler</button>
+      <button class="btn bp" onclick="saveLead()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════ DATA ═══════════════════════════════════════
+const STAGES = [
+  {id:'prospect',    label:'Prospect',    color:'#64748b'},
+  {id:'qualifie',    label:'Qualifié',    color:'#0ea5e9'},
+  {id:'demo',        label:'Démo',        color:'#8b5cf6'},
+  {id:'proposition', label:'Proposition', color:'#f59e0b'},
+  {id:'negociation', label:'Négociation', color:'#f97316'},
+  {id:'gagne',       label:'Gagné ✓',    color:'#10b981'},
+  {id:'perdu',       label:'Perdu ✗',    color:'#ef4444'},
+];
+const DEF_ITYPES  = ['Appel','Email','Réunion','Démo','Relance','WhatsApp'];
+const DEF_SECTORS = ['Confection','Tissage','Tricotage','Bonneterie','Pharma','Tech','Autre'];
+const DEF_USERS   = [
+  {name:'Adam Bouchaala',email:'a.bouchaala@advantryx.com',role:'admin'},
+  {name:'Amir Rekhis',   email:'a.rekhis@advantryx.com',   role:'manager'},
+];
+const SEED_LEADS = [
+  {id:1,stage:'prospect',   company:'Sitex Sfax',         contact:'Mongi Belhaj',  poste:'Dir. Production',tel:'+216 74 234 567',email:'m.belhaj@sitex.tn',sector:'Confection',country:'Tunisie',machines:45, value:61000, probability:20,closingDate:'2026-08-15',source:'Salon Texmed',assignedTo:'Adam Bouchaala',notes:'Grande usine confection Sfax.',createdAt:'2026-05-10',interactions:[{id:1,type:'Appel',date:'2026-05-10',note:'Premier contact. Intéressé par monitoring OEE.',user:'Adam Bouchaala'}]},
+  {id:2,stage:'demo',       company:'Delta Bonneterie',   contact:'Sonia Trabelsi',poste:'DG',             tel:'+216 71 456 789',email:'s.trabelsi@delta-bon.tn',sector:'Bonneterie',country:'Tunisie',machines:120,value:138600,probability:55,closingDate:'2026-07-01',source:'LinkedIn',    assignedTo:'Adam Bouchaala',notes:'Démo prévue.',createdAt:'2026-04-22',interactions:[{id:1,type:'Email',date:'2026-04-22',note:'Prise de contact.',user:'Adam Bouchaala'},{id:2,type:'Appel',date:'2026-04-28',note:'Call 30 min. Budget confirmé.',user:'Adam Bouchaala'}]},
+  {id:3,stage:'proposition',company:'Carthago Textile',   contact:'Fares Mbarek',  poste:'DAF',            tel:'+216 72 123 456',email:'f.mbarek@carthago.tn',sector:'Tissage',country:'Tunisie',machines:80, value:103000,probability:70,closingDate:'2026-06-20',source:'Référence',  assignedTo:'Adam Bouchaala',notes:'Devis envoyé.',createdAt:'2026-03-15',interactions:[{id:1,type:'Réunion',date:'2026-03-15',note:'Réunion direction.',user:'Adam Bouchaala'},{id:2,type:'Démo',date:'2026-04-10',note:'Démo réussie.',user:'Adam Bouchaala'}]},
+  {id:4,stage:'gagne',      company:'Maille Plus Monastir',contact:'Karim Jlassi', poste:'PDG',            tel:'+216 73 678 901',email:'k.jlassi@mailleplus.tn',sector:'Tricotage',country:'Tunisie',machines:60, value:79200, probability:100,closingDate:'2026-05-01',source:'Salon',     assignedTo:'Adam Bouchaala',notes:'Contrat signé.',createdAt:'2026-01-10',interactions:[{id:1,type:'Email',date:'2026-05-01',note:'Contrat signé.',user:'Adam Bouchaala'}]},
+];
+
+// ── stores ──────────────────────────────────────────────────────────────────
+const R = (k,d) => { try{const v=localStorage.getItem(k); return v?JSON.parse(v):d;}catch(e){return d;} };
+const W = (k,v) => localStorage.setItem(k,JSON.stringify(v));
+
+let LEADS = R('crm_leads', SEED_LEADS);
+const saveLeads = () => W('crm_leads', LEADS);
+
+const getUsers   = () => R('crm_users',    DEF_USERS);
+const saveUsers  = a  => W('crm_users',    a);
+const getPwds    = () => R('crm_pwds',     {});
+const savePwds   = o  => W('crm_pwds',     o);
+const getITypes  = () => R('crm_itypes',   DEF_ITYPES);
+const saveITypes = a  => W('crm_itypes',   a);
+const getSecs    = () => R('crm_secs',     DEF_SECTORS);
+const saveSecs   = a  => W('crm_secs',     a);
+const getGSUrl   = () => localStorage.getItem('crm_gs_url')||'';
+const setGSUrl   = u  => localStorage.setItem('crm_gs_url', u);
+const useGS      = () => getGSUrl().startsWith('https://script.google.com/macros/s/');
+
+// ── pwd helpers ─────────────────────────────────────────────────────────────
+const obf   = s => btoa(unescape(encodeURIComponent(s)));
+const deobf = s => { try{return decodeURIComponent(escape(atob(s)));}catch(e){return '';} };
+const checkPwd = (email,pwd) => { const h=getPwds()[email.toLowerCase()]; return h?deobf(h)===pwd:pwd==='password'; };
+const setPwd   = (email,pwd) => { const d=getPwds(); d[email.toLowerCase()]=obf(pwd); savePwds(d); };
+const resetPwd = email       => { const d=getPwds(); delete d[email.toLowerCase()]; savePwds(d); };
+
+// ── api ──────────────────────────────────────────────────────────────────────
+const setLoad = on => document.getElementById('loading').style.display = on?'flex':'none';
+
+async function apiGet(action){
+  const res = await fetch(`${getGSUrl()}?action=${action}`);
+  const txt = await res.text();
+  try{ const d=JSON.parse(txt); if(!d.ok) throw new Error(d.error||action); return d.data; }
+  catch(e){ throw new Error('Réponse invalide ('+action+'): '+txt.substring(0,120)); }
+}
+async function apiPost(body){
+  const res = await fetch(getGSUrl(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)});
+  const txt = await res.text();
+  try{ const d=JSON.parse(txt); if(!d.ok) throw new Error(d.error||body.action); return d.data; }
+  catch(e){ throw new Error('Réponse invalide ('+body.action+'): '+txt.substring(0,120)); }
+}
+
+// ── utils ────────────────────────────────────────────────────────────────────
+const AVC = ['#2563eb','#7c3aed','#16a34a','#d97706','#dc2626','#0891b2'];
+const avc  = n => { let h=0; for(const c of n)h=(h*31+c.charCodeAt(0))&0xffffffff; return AVC[Math.abs(h)%AVC.length]; };
+const ini  = n => (n||'').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+const fmt  = n => new Intl.NumberFormat('fr-TN',{style:'currency',currency:'TND',maximumFractionDigits:0}).format(n);
+const stg  = id => STAGES.find(s=>s.id===id)||STAGES[0];
+const showA = (id,msg,cls) => { const e=document.getElementById(id); if(!e)return; e.className='alert '+cls; e.innerHTML=msg; e.style.display='block'; };
+const closeMod = () => document.getElementById('lead-modal').classList.remove('open');
+
+// ═══════════════════════════════════════ AUTH ═══════════════════════════════════════
+let ME = null;
+
+async function login(){
+  const email = document.getElementById('li-email').value.trim().toLowerCase();
+  const pwd   = document.getElementById('li-pwd').value;
+  const err   = document.getElementById('lerr');
+  const btn   = document.getElementById('lbtn');
+  err.style.display='none';
+  if(!email||!pwd){err.textContent='Email et mot de passe requis.';err.style.display='block';return;}
+  if(!email.endsWith('@advantryx.com')){err.textContent='Seuls les comptes @advantryx.com sont autorisés.';err.style.display='block';return;}
+  btn.disabled=true; btn.textContent='Connexion…';
+  try{
+    const users = getUsers();
+    const user  = users.find(u=>u.email.toLowerCase()===email);
+    if(!user){err.textContent='Compte introuvable : '+email;err.style.display='block';return;}
+    if(!checkPwd(email,pwd)){err.textContent='Mot de passe incorrect. Défaut : password';err.style.display='block';return;}
+    if(useGS()){
+      setLoad(true);
+      try{
+        const [fl,fu] = await Promise.all([apiGet('getCRMLeads'),apiGet('getCRMUsers')]);
+        if(fl&&fl.length>0){LEADS=fl;saveLeads();}
+        else LEADS.forEach(l=>apiPost({action:'saveCRMLead',lead:{...l,interactions:JSON.stringify(l.interactions||[])}}).catch(()=>{}));
+        if(fu&&fu.length>0)saveUsers(fu);
+      }catch(e){console.warn('GS login sync:',e.message);}
+      finally{setLoad(false);}
+    }
+    ME = {name:user.name,email:user.email,role:user.role};
+    sessionStorage.setItem('crm_me',JSON.stringify(ME));
+    startApp();
+  }finally{btn.disabled=false;btn.textContent='Se connecter';}
+}
+
+function logout(){
+  sessionStorage.removeItem('crm_me');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-wrap').style.display='flex';
+  closeDP(); ME=null;
+}
+
+function startApp(){
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('li-email').value='';
+  document.getElementById('li-pwd').value='';
+  document.getElementById('sb-av').textContent=ini(ME.name);
+  document.getElementById('sb-av').style.background=avc(ME.name);
+  document.getElementById('sb-name').textContent=ME.name;
+  document.getElementById('sb-role').textContent={admin:'👑 Admin',manager:'📊 Manager',sales:'💼 Commercial'}[ME.role]||ME.role;
+  document.getElementById('btn-sync').style.display=useGS()?'':'none';
+  nav('kanban');
+}
+
+(function(){
+  const s=sessionStorage.getItem('crm_me');
+  if(s){try{ME=JSON.parse(s);startApp();return;}catch(e){}}
+  document.getElementById('login-wrap').style.display='flex';
+})();
+
+// ═══════════════════════════════════════ NAV ═══════════════════════════════════════
+function nav(page){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+  const panel = document.getElementById('panel-'+page);
+  if(panel) panel.classList.add('active');
+  const btn = document.querySelector(`.nbtn[onclick="nav('${page}')"]`);
+  if(btn) btn.classList.add('active');
+  if(page==='kanban') { renderKPIs('k-kpis'); renderStagebar('k-sbar'); renderKanban(); }
+  if(page==='list')   { renderKPIs('l-kpis'); populateSF(); renderList(); }
+  if(page==='dash')   { renderKPIs('d-kpis'); renderDash(); }
+  if(page==='users')    renderUsers();
+  if(page==='settings') renderSettings();
+}
+
+// ═══════════════════════════════════════ KPIs ══════════════════════════════════════
+function renderKPIs(targetId){
+  const el = document.getElementById(targetId); if(!el) return;
+  const active   = LEADS.filter(l=>!['gagne','perdu'].includes(l.stage));
+  const won      = LEADS.filter(l=>l.stage==='gagne');
+  const pipeline = active.reduce((s,l)=>s+l.value,0);
+  const gained   = won.reduce((s,l)=>s+l.value,0);
+  const weighted = LEADS.filter(l=>l.stage!=='perdu').reduce((s,l)=>s+Math.round(l.value*l.probability/100),0);
+  const conv     = LEADS.length>0?Math.round(won.length/LEADS.length*100):0;
+  el.innerHTML = [
+    {l:'Pipeline actif', v:fmt(pipeline), c:'#2563eb'},
+    {l:'Gagné',          v:fmt(gained),   c:'#16a34a'},
+    {l:'Pondéré',        v:fmt(weighted), c:'#7c3aed'},
+    {l:'Opportunités',   v:active.length, c:'#d97706'},
+    {l:'Conversion',     v:conv+'%',      c:'#0891b2'},
+  ].map(k=>`<div class="kpi"><div class="kpi-line" style="background:${k.c};"></div><div><div class="kpi-lbl">${k.l}</div><div class="kpi-val" style="color:${k.c};">${k.v}</div></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════ STAGE BAR ═════════════════════════════════
+let FILTER = 'all';
+function renderStagebar(targetId){
+  const el = document.getElementById(targetId); if(!el) return;
+  el.innerHTML = [{id:'all',label:'Tous',color:'#6b7280'},...STAGES].map(s=>{
+    const cnt = s.id==='all' ? LEADS.length : LEADS.filter(l=>l.stage===s.id).length;
+    const act = FILTER===s.id;
+    return `<button class="sbtn${act?' active':''}" onclick="setFilter('${s.id}')" style="${act?'background:'+s.color+';border-color:'+s.color+';':''}"><span style="font-size:10px;font-weight:700;${act?'':'color:'+s.color};">${s.label}</span><span style="font-size:14px;font-weight:800;${act?'color:#fff':'color:var(--text)'};">${cnt}</span></button>`;
+  }).join('');
+}
+
+function setFilter(f){
+  FILTER=f;
+  const page=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(page==='kanban'){renderStagebar('k-sbar');renderKanban();}
+  if(page==='list'  ){renderStagebar('k-sbar');renderList();}
+}
+
+// ═══════════════════════════════════════ KANBAN ════════════════════════════════════
+let DRAG_ID = null;
+let SEL_ID  = null;
+
+function renderKanban(){
+  const stages = FILTER==='all' ? STAGES : STAGES.filter(s=>s.id===FILTER);
+  document.getElementById('k-board').innerHTML = stages.map(s=>{
+    const leads = LEADS.filter(l=>l.stage===s.id);
+    return `<div class="kcol" id="kcol-${s.id}"
+      ondragover="event.preventDefault();document.getElementById('kcol-${s.id}').classList.add('dragover');"
+      ondragleave="document.getElementById('kcol-${s.id}').classList.remove('dragover');"
+      ondrop="drop('${s.id}')">
+      <div class="kcol-head" style="background:${s.color}12;border-bottom:2px solid ${s.color};">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${s.color};letter-spacing:.4px;">${s.label.toUpperCase()}</div>
+        </div>
+        <div style="background:${s.color}22;color:${s.color};border-radius:12px;padding:1px 8px;font-size:12px;font-weight:700;">${leads.length}</div>
+      </div>
+      <div class="kcol-body">
+        ${leads.map(l=>leadCard(l,s)).join('')}
+        ${!leads.length?'<div class="kempty">Déposer ici</div>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function leadCard(l, s){
+  const sel = SEL_ID===l.id;
+  return `<div class="lcard${sel?' sel':''}" draggable="true"
+    style="border-left-color:${s.color};"
+    ondragstart="DRAG_ID=${l.id};"
+    ondragend="DRAG_ID=null;"
+    onclick="openDP(${l.id})">
+    <div style="font-weight:600;font-size:13px;margin-bottom:2px;">${l.company}</div>
+    <div style="font-size:11px;color:var(--text2);">${l.contact}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:2px;">⚙ ${l.machines||0} machines</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <div style="font-weight:700;font-size:13px;color:${s.color};">${fmt(l.value)}</div>
+      <div style="font-size:10px;background:${s.color}18;color:${s.color};border-radius:10px;padding:1px 6px;">${l.probability}%</div>
+    </div>
+    ${l.interactions&&l.interactions.length?`<div style="font-size:10px;color:var(--text2);margin-top:6px;">💬 ${l.interactions.length} interaction${l.interactions.length>1?'s':''}</div>`:''}
+  </div>`;
+}
+
+function drop(stageId){
+  if(DRAG_ID===null)return;
+  document.querySelectorAll('.kcol').forEach(c=>c.classList.remove('dragover'));
+  LEADS = LEADS.map(l=>l.id===DRAG_ID?{...l,stage:stageId}:l);
+  saveLeads();
+  if(useGS()){const l=LEADS.find(x=>x.id===DRAG_ID); if(l) syncLead(l);}
+  DRAG_ID=null;
+  renderKPIs('k-kpis'); renderStagebar('k-sbar'); renderKanban();
+  if(SEL_ID) openDP(SEL_ID);
+}
+
+// ═══════════════════════════════════════ LIST ══════════════════════════════════════
+function populateSF(){
+  const sel=document.getElementById('lsf');
+  if(!sel||sel.options.length>1)return;
+  STAGES.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.label;sel.appendChild(o);});
+}
+
+function renderList(){
+  const q  = (document.getElementById('lq')?.value||'').toLowerCase();
+  const sf = document.getElementById('lsf')?.value||'';
+  let rows = FILTER==='all' ? [...LEADS] : LEADS.filter(l=>l.stage===FILTER);
+  if(q)  rows = rows.filter(l=>l.company.toLowerCase().includes(q)||l.contact.toLowerCase().includes(q));
+  if(sf) rows = rows.filter(l=>l.stage===sf);
+  document.getElementById('l-table').innerHTML = `<div class="card" style="overflow:hidden;padding:0;">
+    <div class="tbl"><table>
+      <thead><tr><th>Entreprise</th><th>Contact</th><th>Secteur</th><th>Valeur</th><th>Probabilité</th><th>Étape</th><th>Assigné</th><th>Closing</th><th></th></tr></thead>
+      <tbody>${rows.map(l=>{
+        const s=stg(l.stage);
+        return `<tr onclick="openDP(${l.id})" style="cursor:pointer;${SEL_ID===l.id?'background:var(--blue-bg);':''}">
+          <td><div style="font-weight:600;">${l.company}</div><div style="font-size:10px;color:var(--text3);">${l.country||''}</div></td>
+          <td style="font-size:12px;">${l.contact}<br><span style="font-size:10px;color:var(--text3);">${l.poste||''}</span></td>
+          <td style="font-size:12px;color:var(--text2);">${l.sector||''}</td>
+          <td style="font-weight:700;color:${s.color};">${fmt(l.value)}</td>
+          <td><div style="display:flex;align-items:center;gap:5px;">
+            <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;"><div style="width:${l.probability}%;height:100%;background:${s.color};border-radius:2px;"></div></div>
+            <span style="font-size:10px;">${l.probability}%</span>
+          </div></td>
+          <td><span style="background:${s.color}18;color:${s.color};border-radius:10px;padding:2px 9px;font-size:11px;font-weight:700;">${s.label}</span></td>
+          <td style="font-size:12px;">${l.assignedTo||'—'}</td>
+          <td style="font-size:12px;color:var(--text2);">${l.closingDate||'—'}</td>
+          <td><button onclick="event.stopPropagation();openLead(${l.id})" class="btn bg bsm">✎</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div></div>`;
+}
+
+// ═══════════════════════════════════════ DASHBOARD ════════════════════════════════
+function renderDash(){
+  const mx = Math.max(...LEADS.map(l=>l.value),1);
+  const srcMap={};
+  LEADS.forEach(l=>{srcMap[l.source||'Autre']=(srcMap[l.source||'Autre']||0)+1;});
+  document.getElementById('d-content').innerHTML = `
+    <div class="g2">
+      <div class="card">
+        <div class="ctitle">Pipeline par étape</div>
+        ${STAGES.filter(s=>s.id!=='perdu').map(s=>{
+          const sl=LEADS.filter(l=>l.stage===s.id);
+          const val=sl.reduce((a,l)=>a+l.value,0);
+          return `<div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:12px;color:${s.color};">${s.label}</span>
+              <span style="font-size:12px;color:var(--text2);">${sl.length} lead${sl.length!==1?'s':''} · ${fmt(val)}</span>
+            </div>
+            <div style="height:6px;background:var(--surface2);border-radius:3px;">
+              <div style="width:${Math.min(100,val/mx*100)}%;height:100%;background:${s.color};border-radius:3px;"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="ctitle">Sources de leads</div>
+        ${Object.entries(srcMap).sort((a,b)=>b[1]-a[1]).map(([src,cnt])=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
+            <div style="flex:1;font-size:12px;">${src}</div>
+            <div style="display:flex;gap:3px;">${Array.from({length:cnt}).map(()=>'<div style="width:12px;height:12px;background:#2563eb18;border:1px solid #2563eb44;border-radius:2px;"></div>').join('')}</div>
+            <div style="font-size:12px;color:var(--text2);min-width:16px;">${cnt}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Top opportunités — Pipeline pondéré</div>
+      ${[...LEADS].filter(l=>l.stage!=='perdu').sort((a,b)=>(b.value*b.probability/100)-(a.value*a.probability/100)).slice(0,5).map(l=>{
+        const s=stg(l.stage);
+        const w=Math.round(l.value*l.probability/100);
+        return `<div onclick="openDP(${l.id})" style="display:flex;align-items:center;gap:14px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer;border:1px solid var(--border);margin-bottom:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;"></div>
+          <div style="flex:1;"><div style="font-weight:600;font-size:13px;">${l.company}</div><div style="font-size:11px;color:var(--text2);">${l.contact} · ${l.machines||0} machines · ${l.assignedTo||''}</div></div>
+          <span style="font-size:11px;background:${s.color}18;color:${s.color};border-radius:10px;padding:2px 8px;">${s.label}</span>
+          <div style="text-align:right;"><div style="font-weight:700;color:${s.color};">${fmt(l.value)}</div><div style="font-size:11px;color:var(--text2);">Pondéré: ${fmt(w)}</div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════ DETAIL PANEL ═════════════════════════════
+function openDP(id){
+  SEL_ID = id;
+  const l = LEADS.find(x=>x.id===id); if(!l) return;
+  const s = stg(l.stage);
+  const si = STAGES.findIndex(x=>x.id===l.stage);
+  document.getElementById('dp-wrap').style.display='block';
+
+  // Adjust main padding
+  document.querySelector('.main').style.paddingRight='0';
+
+  document.getElementById('dp-head').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-weight:700;font-size:16px;">${l.company}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${l.contact}${l.poste?' · '+l.poste:''}</div>
+        <div style="margin-top:8px;display:flex;gap:6px;align-items:center;">
+          <button onclick="moveStage(${id},-1)" ${si===0?'disabled':''} class="btn bg bsm" style="opacity:${si===0?.3:1};">◀</button>
+          <span style="background:${s.color}18;color:${s.color};border-radius:12px;padding:3px 12px;font-size:12px;font-weight:700;">${s.label}</span>
+          <button onclick="moveStage(${id},1)" ${si===STAGES.length-1?'disabled':''} class="btn bg bsm" style="opacity:${si===STAGES.length-1?.3:1};">▶</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="openLead(${id})" class="btn bg bsm">✎</button>
+        <button onclick="deleteLead(${id})" class="btn bd bsm">🗑</button>
+        <button onclick="closeDP()" class="btn bg bsm">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:3px;margin-top:8px;">
+      ${STAGES.slice(0,5).map((x,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:${l.stage==='gagne'?'#16a34a':l.stage==='perdu'?(i===0?'#dc2626':'var(--surface2)'):i<=si?x.color:'var(--surface2)'}"></div>`).join('')}
+    </div>`;
+
+  document.getElementById('dp-body').innerHTML = `
+    <div style="margin:12px 0;">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Informations</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        ${[['📞',l.tel||'—'],['✉',l.email||'—'],['🏭',l.sector||'—'],['🌍',l.country||'—'],['⚙',(l.machines||0)+' machines'],['💰',fmt(l.value)],['🎯',l.probability+'% probabilité'],['📅',l.closingDate||'—'],['📣',l.source||'—'],['👤',l.assignedTo||'—']].map(([ic,v])=>`<div style="background:var(--surface2);border-radius:6px;padding:7px 10px;"><div style="font-size:10px;color:var(--text3);">${ic}</div><div style="font-size:12px;font-weight:500;margin-top:2px;">${v}</div></div>`).join('')}
+      </div>
+      ${l.notes?`<div style="background:var(--surface2);border-radius:6px;padding:8px 10px;margin-top:8px;"><div style="font-size:10px;color:var(--text3);">📝 Notes</div><div style="font-size:12px;margin-top:4px;line-height:1.5;">${l.notes}</div></div>`:''}
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;">Historique (${(l.interactions||[]).length})</div>
+        <button onclick="toggleIF(${id})" class="btn bp bsm">+ Ajouter</button>
+      </div>
+      <div id="iform-${id}" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;">
+          ${getITypes().map(t=>`<button onclick="selIT('${t}',${id})" id="it-${id}-${t.replace(/\s/g,'_')}" class="btn bg bsm" style="font-size:10px;">${t}</button>`).join('')}
+        </div>
+        <textarea id="inote-${id}" placeholder="Note / compte-rendu…" style="width:100%;font-size:12px;padding:8px;border:1px solid var(--border2);border-radius:6px;min-height:60px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button onclick="addInter(${id})" class="btn bp bsm" style="flex:1;">Enregistrer</button>
+          <button onclick="toggleIF(${id})" class="btn bg bsm">Annuler</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${[...(l.interactions||[])].reverse().map(it=>`
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;border-left:3px solid var(--blue);">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg);border-radius:10px;padding:1px 8px;">${it.type}</span>
+              <span style="font-size:11px;color:var(--text2);">${it.date}</span>
+            </div>
+            <div style="font-size:12px;line-height:1.5;">${it.note}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px;">— ${it.user}</div>
+          </div>`).join('')}
+        ${!(l.interactions||[]).length?'<div style="text-align:center;padding:14px;color:var(--text3);font-size:12px;">Aucune interaction enregistrée</div>':''}
+      </div>
+    </div>`;
+
+  // Refresh current view highlight
+  const pg = document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(pg==='kanban') renderKanban();
+  if(pg==='list')   renderList();
+}
+
+function closeDP(){
+  SEL_ID=null;
+  document.getElementById('dp-wrap').style.display='none';
+  const pg=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(pg==='kanban') renderKanban();
+  if(pg==='list')   renderList();
+}
+
+function moveStage(id,dir){
+  const l=LEADS.find(x=>x.id===id); if(!l) return;
+  const i=STAGES.findIndex(s=>s.id===l.stage);
+  const ni=i+dir; if(ni<0||ni>=STAGES.length) return;
+  LEADS=LEADS.map(x=>x.id===id?{...x,stage:STAGES[ni].id}:x);
+  saveLeads();
+  if(useGS()) syncLead(LEADS.find(x=>x.id===id));
+  const pg=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(pg==='kanban'){renderKPIs('k-kpis');renderStagebar('k-sbar');renderKanban();}
+  if(pg==='list')  {renderKPIs('l-kpis');renderList();}
+  openDP(id);
+}
+
+function deleteLead(id){
+  if(!confirm('Supprimer ce lead ?')) return;
+  LEADS=LEADS.filter(l=>l.id!==id); saveLeads();
+  if(useGS()) apiPost({action:'deleteCRMLead',id}).catch(()=>{});
+  closeDP();
+  const pg=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(pg==='kanban'){renderKPIs('k-kpis');renderStagebar('k-sbar');renderKanban();}
+  if(pg==='list')  {renderKPIs('l-kpis');renderList();}
+  if(pg==='dash')  {renderKPIs('d-kpis');renderDash();}
+}
+
+let _itype='Appel';
+function toggleIF(id){const e=document.getElementById('iform-'+id);if(e)e.style.display=e.style.display==='none'?'block':'none';}
+function selIT(t,id){
+  _itype=t;
+  getITypes().forEach(tt=>{
+    const b=document.getElementById(`it-${id}-${tt.replace(/\s/g,'_')}`);
+    if(b){b.style.background=tt===t?'var(--blue)':'';b.style.color=tt===t?'#fff':'';b.style.borderColor=tt===t?'var(--blue)':'var(--border2)';}
+  });
+}
+function addInter(id){
+  const note=document.getElementById('inote-'+id)?.value?.trim(); if(!note) return;
+  const inter={id:Date.now(),type:_itype,date:new Date().toISOString().split('T')[0],note,user:ME?.name||'Admin'};
+  LEADS=LEADS.map(l=>l.id===id?{...l,interactions:[...(l.interactions||[]),inter]}:l);
+  saveLeads();
+  if(useGS()) syncLead(LEADS.find(l=>l.id===id));
+  openDP(id);
+}
+
+// ═══════════════════════════════════════ LEAD MODAL ═══════════════════════════════
+let EDIT_ID = null;
+function openLead(id){
+  EDIT_ID = id;
+  const l = id ? LEADS.find(x=>x.id===id) : null;
+  document.getElementById('lm-title').textContent = id ? 'Modifier le lead' : 'Nouveau Lead';
+  const users = getUsers().filter(u=>['admin','manager','sales'].includes(u.role));
+  const secs  = getSecs();
+  const d = l||{company:'',contact:'',poste:'',tel:'',email:'',sector:'Confection',country:'Tunisie',machines:'',value:'',probability:20,closingDate:'',source:'',notes:'',assignedTo:ME?.name||''};
+  document.getElementById('lm-form').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      ${[['Entreprise *','company','text','SITEX Sfax'],['Contact *','contact','text','Prénom Nom'],['Poste','poste','text','Dir. Production'],['Téléphone','tel','tel','+216 7X XXX XXX'],['Email','email','email','contact@entreprise.tn'],['Machines','machines','number','50'],['Valeur (TND)','value','number','25000'],['Probabilité (%)','probability','number','20'],['Date closing','closingDate','date',''],['Source','source','text','Salon, LinkedIn…']].map(([lbl,fld,tp,ph])=>`
+        <div class="fg" style="margin-bottom:0;">
+          <label>${lbl}</label>
+          <input type="${tp}" id="lf-${fld}" placeholder="${ph}" value="${d[fld]||''}">
+        </div>`).join('')}
+      <div class="fg" style="margin-bottom:0;"><label>Secteur</label><select id="lf-sector">${secs.map(s=>`<option ${d.sector===s?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="fg" style="margin-bottom:0;"><label>Assigné à</label><select id="lf-assignedTo">${users.map(u=>`<option value="${u.name}" ${d.assignedTo===u.name?'selected':''}>${u.name}</option>`).join('')}</select></div>
+      <div class="fg" style="grid-column:1/-1;margin-bottom:0;"><label>Notes</label><textarea id="lf-notes" rows="3">${d.notes||''}</textarea></div>
+    </div>`;
+  document.getElementById('lead-modal').classList.add('open');
+}
+
+function saveLead(){
+  const g = fld => document.getElementById('lf-'+fld)?.value?.trim()||'';
+  if(!g('company')||!g('contact')){alert('Entreprise et contact obligatoires.');return;}
+  const existing = EDIT_ID ? LEADS.find(l=>l.id===EDIT_ID) : null;
+  const lead = {
+    id          : EDIT_ID || (Math.max(0,...LEADS.map(l=>l.id))+1),
+    stage       : existing?.stage || 'prospect',
+    company     : g('company'), contact:g('contact'), poste:g('poste'),
+    tel         : g('tel'),     email:g('email'),
+    sector      : g('sector'),  country:g('country')||'Tunisie',
+    machines    : parseInt(g('machines'))||0,
+    value       : parseFloat(g('value'))||0,
+    probability : parseInt(g('probability'))||20,
+    closingDate : g('closingDate'), source:g('source'),
+    notes       : g('notes'),
+    assignedTo  : g('assignedTo'),
+    createdAt   : existing?.createdAt || new Date().toISOString().split('T')[0],
+    interactions: existing?.interactions || [],
+  };
+  LEADS = EDIT_ID ? LEADS.map(l=>l.id===EDIT_ID?lead:l) : [...LEADS,lead];
+  saveLeads();
+  if(useGS()) syncLead(lead);
+  closeMod();
+  const pg=document.querySelector('.panel.active')?.id?.replace('panel-','');
+  if(pg==='kanban'){renderKPIs('k-kpis');renderStagebar('k-sbar');renderKanban();}
+  if(pg==='list')  {renderKPIs('l-kpis');renderList();}
+  if(pg==='dash')  {renderKPIs('d-kpis');renderDash();}
+  if(EDIT_ID) openDP(EDIT_ID);
+}
+
+function syncLead(l){
+  if(!l)return;
+  apiPost({action:'saveCRMLead',lead:{...l,interactions:JSON.stringify(l.interactions||[])}}).catch(e=>console.warn('GS sync:',e));
+}
+
+// ═══════════════════════════════════════ SETTINGS ═════════════════════════════════
+function renderSettings(){
+  document.getElementById('cfg-url').value = getGSUrl();
+  document.getElementById('btn-sync').style.display = useGS()?'':'none';
+  const tagStyle = 'display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:12px;';
+  document.getElementById('itype-list').innerHTML = getITypes().map((t,i)=>`<div style="${tagStyle}">${t}<button onclick="rmIT(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);">✕</button></div>`).join('');
+  document.getElementById('sec-list').innerHTML   = getSecs().map((s,i)  =>`<div style="${tagStyle}">${s}<button onclick="rmSec(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);">✕</button></div>`).join('');
+}
+function addIType(){const v=document.getElementById('new-itype').value.trim();if(!v)return;const t=getITypes();if(!t.includes(v)){t.push(v);saveITypes(t);}document.getElementById('new-itype').value='';renderSettings();}
+function rmIT(i){const t=getITypes();t.splice(i,1);saveITypes(t);renderSettings();}
+function addSec(){const v=document.getElementById('new-sec').value.trim();if(!v)return;const s=getSecs();if(!s.includes(v)){s.push(v);saveSecs(s);}document.getElementById('new-sec').value='';renderSettings();}
+function rmSec(i){const s=getSecs();s.splice(i,1);saveSecs(s);renderSettings();}
+
+async function saveGS(){
+  const url=document.getElementById('cfg-url').value.trim();
+  const st=document.getElementById('gs-status');
+  if(!url){setGSUrl('');showA('cfg-alert','URL supprimée.','aw');renderSettings();return;}
+  if(!url.startsWith('https://script.google.com/macros/s/')){showA('cfg-alert','URL invalide. Elle doit commencer par https://script.google.com/macros/s/','ae');return;}
+  setGSUrl(url);
+  st.innerHTML='<span style="color:var(--amber);">⏳ Test 1/3 — Ping Apps Script…</span>';
+  setLoad(true);
+  try{
+    // Step 1: ping
+    await apiGet('ping');
+    st.innerHTML='<span style="color:var(--amber);">⏳ Test 2/3 — Lecture des utilisateurs…</span>';
+
+    // Step 2: read users (tests Sheet access + tab existence)
+    const users = await apiGet('getCRMUsers');
+    st.innerHTML='<span style="color:var(--amber);">⏳ Test 3/3 — Lecture des leads…</span>';
+
+    // Step 3: read leads
+    const leads = await apiGet('getCRMLeads');
+
+    // All good — sync data
+    if(users&&users.length>0) saveUsers(users);
+    if(leads&&leads.length>0){LEADS=leads;saveLeads();}
+    else if(LEADS.length>0){
+      st.innerHTML='<span style="color:var(--amber);">⏳ Envoi des leads locaux vers Sheets…</span>';
+      for(const l of LEADS){
+        await apiPost({action:'saveCRMLead',lead:{...l,interactions:JSON.stringify(l.interactions||[])}});
+      }
+    }
+    st.innerHTML='<span style="color:var(--green-t);">✅ Connecté ! '+(leads?.length||0)+' leads, '+(users?.length||0)+' utilisateurs.</span>';
+    showA('cfg-alert','✅ Google Sheets connecté et données synchronisées.','as');
+    renderSettings();
+  }catch(e){
+    const hint = e.message.includes('Tab')
+      ? '<br><small>👉 Exécutez <strong>setupSheets()</strong> dans Apps Script pour créer les onglets.</small>'
+      : e.message.includes('SHEET_ID')||e.message.includes('Spreadsheet')
+      ? '<br><small>👉 Vérifiez que <strong>SHEET_ID</strong> est correct dans le Apps Script.</small>'
+      : e.message.includes('non-JSON')||e.message.includes('invalid')
+      ? '<br><small>👉 Vérifiez que le déploiement est de type <strong>Application Web</strong> avec accès <strong>Tout le monde</strong>.</small>'
+      : '<br><small>👉 Ouvrez Apps Script → Exécutions pour voir le détail de les erreurs.</small>';
+    st.innerHTML='<span style="color:var(--red-t);">❌ '+e.message+'</span>';
+    showA('cfg-alert','❌ '+e.message+hint,'ae');
+  }finally{setLoad(false);}
+}
+function disconnectGS(){if(!confirm('Déconnecter Google Sheets ?'))return;setGSUrl('');document.getElementById('cfg-url').value='';showA('cfg-alert','Déconnecté. Données conservées localement.','aw');renderSettings();}
+async function syncGS(){
+  if(!useGS()){alert('Non configuré.');return;}
+  setLoad(true);
+  try{
+    const [fl,fu]=await Promise.all([apiGet('getCRMLeads'),apiGet('getCRMUsers')]);
+    if(fl&&fl.length>0){LEADS=fl;saveLeads();}
+    if(fu&&fu.length>0)saveUsers(fu);
+    const pg=document.querySelector('.panel.active')?.id?.replace('panel-','');
+    if(pg==='kanban'){renderKPIs('k-kpis');renderStagebar('k-sbar');renderKanban();}
+    if(pg==='list')  {renderKPIs('l-kpis');renderList();}
+    showA('cfg-alert','✅ Données synchronisées.','as');
+  }catch(e){showA('cfg-alert','❌ Sync échoué : '+e.message,'ae');}
+  finally{setLoad(false);}
+}
+
+// ═══════════════════════════════════════ USERS ════════════════════════════════════
+function renderUsers(){
+  const users=getUsers(); const q=(document.getElementById('u-q')?.value||'').toLowerCase();
+  const rows=users.filter(u=>u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q));
+  document.getElementById('u-cnt').textContent='('+users.length+')';
+  const pwDb=getPwds(); const rL={admin:'👑 Admin',manager:'📊 Manager',sales:'💼 Commercial'};
+  document.getElementById('u-tbody').innerHTML=rows.map((u,ri)=>{
+    const i=users.indexOf(u); const isSelf=u.email.toLowerCase()===(ME?.email||'').toLowerCase();
+    const hp=!!pwDb[u.email.toLowerCase()];
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:26px;height:26px;border-radius:50%;background:${avc(u.name)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${ini(u.name)}</div><span style="font-weight:500;">${u.name}${isSelf?' <span style="font-size:10px;color:var(--blue);">(vous)</span>':''}</span></div></td>
+      <td style="font-size:12px;color:var(--text2);">${u.email}</td>
+      <td><select onchange="chRole(${i},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--border2);border-radius:4px;" ${isSelf?'disabled':''}>
+        ${['sales','manager','admin'].map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${rL[r]}</option>`).join('')}
+      </select></td>
+      <td><span style="font-size:11px;color:${hp?'var(--green-t)':'var(--text3)'};">${hp?'✓ Personnalisé':'Par défaut'}</span>
+        <button class="btn bg bsm" onclick="rstPwd('${u.email}','${u.name}')" style="margin-left:6px;">Reset</button></td>
+      <td><button class="btn bd bsm" onclick="rmUser(${i},'${u.name}')" ${isSelf?'disabled':''}>🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function addUser(){
+  const name=document.getElementById('u-name').value.trim();
+  const email=document.getElementById('u-email').value.trim().toLowerCase();
+  const role=document.getElementById('u-role').value;
+  const pwd=document.getElementById('u-pwd').value.trim();
+  if(!name||!email){showA('u-alert','Nom et email obligatoires.','ae');return;}
+  if(!email.endsWith('@advantryx.com')){showA('u-alert',"L'email doit être @advantryx.com.",'ae');return;}
+  const users=getUsers();
+  if(users.find(u=>u.email.toLowerCase()===email)){showA('u-alert','Compte déjà existant.','ae');return;}
+  const nu={name,email,role};
+  if(useGS()){setLoad(true);try{await apiPost({action:'saveCRMUser',user:nu});}catch(e){setLoad(false);showA('u-alert','❌ GSheets: '+e.message,'ae');return;}finally{setLoad(false);}}
+  users.push(nu);saveUsers(users);if(pwd)setPwd(email,pwd);
+  ['u-name','u-email','u-pwd'].forEach(id=>document.getElementById(id).value='');
+  showA('u-alert','✅ <strong>'+name+'</strong> ajouté comme '+(rL[role]||role)+'.','as');
+  renderUsers();
+}
+const rL={admin:'👑 Admin',manager:'📊 Manager',sales:'💼 Commercial'};
+function chRole(i,role){const u=getUsers();u[i].role=role;saveUsers(u);if(useGS())apiPost({action:'saveCRMUser',user:u[i]}).catch(()=>{});}
+function rmUser(i,name){if(!confirm('Supprimer '+name+' ?'))return;const u=getUsers();const email=u[i].email;u.splice(i,1);saveUsers(u);if(useGS())apiPost({action:'deleteCRMUser',email}).catch(()=>{});showA('u-alert','⚠ '+name+' supprimé.','aw');renderUsers();}
+function rstPwd(email,name){if(!confirm('Réinitialiser le mot de passe de '+name+' ?'))return;resetPwd(email);if(useGS())apiPost({action:'resetPassword',email}).catch(()=>{});showA('u-alert','✅ Mot de passe de <strong>'+name+'</strong> réinitialisé.','as');renderUsers();}
+
+function changePwd(){
+  const cur=document.getElementById('p-cur').value;const nw=document.getElementById('p-new').value;const cfm=document.getElementById('p-cfm').value;
+  if(!checkPwd(ME?.email||'',cur)){showA('p-alert','Mot de passe actuel incorrect.','ae');return;}
+  if(nw.length<6){showA('p-alert','Minimum 6 caractères.','aw');return;}
+  if(nw!==cfm){showA('p-alert','Les mots de passe ne correspondent pas.','ae');return;}
+  setPwd(ME?.email||'',nw);if(useGS())apiPost({action:'changePassword',email:ME?.email,current:cur,newPassword:nw}).catch(()=>{});
+  showA('p-alert','✅ Mot de passe modifié.','as');['p-cur','p-new','p-cfm'].forEach(id=>document.getElementById(id).value='');
+}
+</script>
+</body>
+</html>
