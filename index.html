@@ -414,20 +414,20 @@ async function login(){
   if(!email.endsWith('@advantryx.com')){err.textContent='Seuls les comptes @advantryx.com sont autorisés.';err.style.display='block';return;}
   btn.disabled=true; btn.textContent='Connexion…';
   try{
-    const users = getUsers();
-    const user  = users.find(u=>u.email.toLowerCase()===email);
-    if(!user){err.textContent='Compte introuvable : '+email;err.style.display='block';return;}
-    if(!checkPwd(email,pwd)){err.textContent='Mot de passe incorrect. Défaut : password';err.style.display='block';return;}
+    // Sync from Sheets FIRST so newly-added users (not yet in localStorage) are found
     if(useGS()){
       setLoad(true);
       try{
         const [fl,fu] = await Promise.all([apiGet('getCRMLeads'),apiGet('getCRMUsers')]);
         if(fl&&fl.length>0){LEADS=fl;saveLeads();}
-        else LEADS.forEach(l=>apiPost({action:'saveCRMLead',lead:{...l,interactions:JSON.stringify(l.interactions||[])}}).catch(()=>{}));
         if(fu&&fu.length>0)saveUsers(fu);
       }catch(e){console.warn('GS login sync:',e.message);}
       finally{setLoad(false);}
     }
+    const users = getUsers();
+    const user  = users.find(u=>u.email.toLowerCase()===email);
+    if(!user){err.textContent='Compte introuvable : '+email;err.style.display='block';return;}
+    if(!checkPwd(email,pwd)){err.textContent='Mot de passe incorrect. Défaut : password';err.style.display='block';return;}
     ME = {name:user.name,email:user.email,role:user.role};
     sessionStorage.setItem('crm_me',JSON.stringify(ME));
     startApp();
